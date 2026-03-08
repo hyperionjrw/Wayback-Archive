@@ -1,273 +1,250 @@
-# Wayback-Archive
+<p align="center">
+  <img src="docs/images/banner.svg" alt="Wayback-Archive banner" width="900"/>
+</p>
 
-A comprehensive Python tool for downloading and archiving websites from the Wayback Machine. Preserves complete functionality including fonts, CSS, JavaScript, images, and interactive elements for offline viewing.
+<p align="center">
+  <strong>Download complete websites from the Wayback Machine for offline viewing.</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8%2B-blue?logo=python&logoColor=white" alt="Python 3.8+"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License GPL-3.0"/></a>
+  <a href="https://github.com/GeiserX/Wayback-Archive/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version 1.0.0"/></a>
+  <a href="https://github.com/GeiserX/Wayback-Archive"><img src="https://img.shields.io/github/stars/GeiserX/Wayback-Archive?style=social" alt="GitHub Stars"/></a>
+</p>
+
+---
+
+Wayback-Archive is a Python tool that downloads archived websites from the [Wayback Machine](https://web.archive.org/) and reconstructs them for fully functional offline viewing. It preserves all assets -- HTML, CSS, JavaScript, images, and fonts -- rewrites URLs to relative paths, and cleans up Wayback Machine artifacts so the result looks like the original site.
+
+## Quick Start
+
+```bash
+# Install
+git clone https://github.com/GeiserX/Wayback-Archive.git
+cd Wayback-Archive
+pip install -r config/requirements.txt
+
+# Run
+export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://example.com/"
+python3 -m wayback_archive.cli
+
+# Preview
+cd output && python3 -m http.server 8000
+# Open http://localhost:8000
+```
 
 ## Features
 
-### Core Functionality
-- **Full website download**: HTML, CSS, JS, images, fonts, and all assets
-- **Recursive link discovery**: Automatically follows links in HTML, CSS, and JS files
-- **Timeframe fallback**: Searches nearby timestamps if a file returns 404
-- **Smart URL rewriting**: Converts all links to relative paths for local serving
-- **Real-time progress logging**: See download status and file processing in real-time
+### Core
 
-### Advanced Features
-- **Google Fonts support**: Downloads and serves Google Fonts locally (fixes CORS issues)
-- **Font corruption detection**: Automatically detects and removes corrupted font files (HTML error pages)
-- **Icon group preservation**: Preserves all links in icon groups (social media, contact icons)
-- **Button link preservation**: Maintains styling and functionality of button links
-- **Cookie consent preservation**: Keeps cookie consent popups and functionality
-- **CDN fallback**: Automatic fallback to CDN for critical files (e.g., jQuery) if Wayback Machine fails
-- **Data attribute processing**: Processes `data-*` attributes containing URLs (videos, images, etc.)
+- **Full website download** -- HTML, CSS, JS, images, fonts, and all linked assets
+- **Recursive link discovery** -- Automatically follows links in HTML, CSS, and JS files
+- **Smart URL rewriting** -- Converts all links to relative paths for local serving
+- **Timeframe fallback** -- Searches nearby Wayback Machine timestamps when a resource returns 404
+- **Real-time progress logging** -- Displays download status and file processing as it happens
 
-### Optimization Options
-- **HTML optimization**: Minification using `minify-html` (Python 3.14+ compatible)
-- **Image optimization**: Optional image compression
-- **JS/CSS minification**: Optional JavaScript and CSS minification
-- **Content removal**: Remove trackers, ads, and external iframes
-- **Link handling**: Configurable external link removal/keeping
-- **Contact link handling**: Option to preserve or remove clickable contacts
-- **www/non-www conversion**: Normalize domain variations
+### Asset Handling
+
+- **Google Fonts support** -- Downloads Google Fonts CSS and font files locally, fixing CORS issues
+- **Font corruption detection** -- Identifies and removes corrupted font files (HTML error pages served as fonts)
+- **CDN fallback** -- Automatic fallback to CDN for critical libraries (e.g., jQuery) when Wayback Machine fails
+- **Data attribute processing** -- Processes `data-*` attributes containing URLs (videos, images, etc.)
+
+### Preservation
+
+- **Icon group preservation** -- Preserves all links in icon groups (social media, contact icons)
+- **Button link preservation** -- Maintains styling and functionality of button links
+- **Cookie consent preservation** -- Keeps cookie consent popups and functionality intact
+
+### Optimization
+
+- **HTML minification** -- Uses `minify-html` (Python 3.14+ compatible)
+- **JS/CSS minification** -- Optional JavaScript and CSS minification via `rjsmin` and `cssmin`
+- **Image compression** -- Optional image optimization with Pillow
+- **Tracker/ad removal** -- Strips analytics, ads, and external iframes
+- **Link cleanup** -- Configurable external link removal with anchor preservation options
+- **www/non-www normalization** -- Normalize domain variations automatically
+
+## Why Wayback-Archive?
+
+| Capability | Wayback-Archive | wget | httrack |
+|---|:---:|:---:|:---:|
+| Wayback Machine URL rewriting | Yes | No | No |
+| Wayback artifact cleanup | Yes | No | No |
+| Timeframe fallback for 404s | Yes | No | No |
+| Google Fonts localization | Yes | No | No |
+| Font corruption detection | Yes | No | No |
+| CDN fallback | Yes | No | No |
+| HTML/CSS/JS minification | Yes | No | No |
+| Tracker and ad removal | Yes | No | No |
+| `data-*` attribute processing | Yes | No | No |
+
+General-purpose tools like `wget --mirror` or `httrack` can download live websites, but they do not understand Wayback Machine URL structures, cannot clean up archive artifacts, and lack the specialized asset recovery that Wayback-Archive provides.
 
 ## Installation
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip (Python package manager)
 
-### Setup
+- Python 3.8 or higher
+- pip
+
+### From Source
 
 ```bash
-# Clone the repository
 git clone https://github.com/GeiserX/Wayback-Archive.git
 cd Wayback-Archive
 
-# Create virtual environment (recommended)
+# Optional: create a virtual environment
 python3 -m venv venv
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate   # Windows
 
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
 pip install -r config/requirements.txt
+```
+
+### As a Package
+
+```bash
+cd Wayback-Archive
+pip install -e .
+wayback-archive  # Available as a CLI command after installation
 ```
 
 ## Configuration
 
-All options are configured via environment variables. You can set them directly or use a `.env` file.
+All options are set via environment variables. You can also use a `.env` file.
 
-### Required Variables
+### Required
 
-- `WAYBACK_URL`: The Wayback Machine URL to download (required)
-  ```bash
-  export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://clvreformas.com/"
-  ```
+| Variable | Description |
+|---|---|
+| `WAYBACK_URL` | The Wayback Machine URL to download |
 
-### Output Configuration
+### Output
 
-- `OUTPUT_DIR`: Output directory for downloaded files (default: `./output`)
-  ```bash
-  export OUTPUT_DIR="./my_website"
-  ```
+| Variable | Default | Description |
+|---|---|---|
+| `OUTPUT_DIR` | `./output` | Output directory for downloaded files |
 
-### Optimization Options
+### Optimization
 
-- `OPTIMIZE_HTML`: Optimize HTML code (default: `true`)
-- `OPTIMIZE_IMAGES`: Optimize images (default: `false`)
-- `MINIFY_JS`: Minify JavaScript (default: `false`)
-- `MINIFY_CSS`: Minify CSS (default: `false`)
+| Variable | Default | Description |
+|---|---|---|
+| `OPTIMIZE_HTML` | `true` | Minify HTML |
+| `OPTIMIZE_IMAGES` | `false` | Compress images |
+| `MINIFY_JS` | `false` | Minify JavaScript |
+| `MINIFY_CSS` | `false` | Minify CSS |
 
-### Content Removal Options
+### Content Removal
 
-- `REMOVE_TRACKERS`: Remove trackers and analytics (default: `true`)
-- `REMOVE_ADS`: Remove ads (default: `true`)
-- `REMOVE_CLICKABLE_CONTACTS`: Remove clickable contacts (default: `true`)
-- `REMOVE_EXTERNAL_IFRAMES`: Remove external iframes (default: `false`)
+| Variable | Default | Description |
+|---|---|---|
+| `REMOVE_TRACKERS` | `true` | Remove analytics and trackers |
+| `REMOVE_ADS` | `true` | Remove advertisements |
+| `REMOVE_CLICKABLE_CONTACTS` | `true` | Remove `tel:` and `mailto:` links |
+| `REMOVE_EXTERNAL_IFRAMES` | `false` | Remove external iframes |
 
-### Link Handling Options
+### Link Handling
 
-- `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS`: Remove external links, saving anchors (default: `true`)
-- `REMOVE_EXTERNAL_LINKS_REMOVE_ANCHORS`: Remove external links together with anchors (default: `false`)
-- `MAKE_INTERNAL_LINKS_RELATIVE`: Make internal links relative (default: `true`)
+| Variable | Default | Description |
+|---|---|---|
+| `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS` | `true` | Remove external links, keep anchor text |
+| `REMOVE_EXTERNAL_LINKS_REMOVE_ANCHORS` | `false` | Remove external links and anchor elements |
+| `MAKE_INTERNAL_LINKS_RELATIVE` | `true` | Convert internal links to relative paths |
 
-### Domain Options
+### Domain
 
-- `MAKE_NON_WWW`: Convert www to non-www (default: `true`)
-- `MAKE_WWW`: Convert non-www to www (default: `false`)
-- `KEEP_REDIRECTIONS`: Keep redirections (default: `false`)
+| Variable | Default | Description |
+|---|---|---|
+| `MAKE_NON_WWW` | `true` | Convert www to non-www |
+| `MAKE_WWW` | `false` | Convert non-www to www |
+| `KEEP_REDIRECTIONS` | `false` | Keep redirect pages |
 
-### Testing Options
+### Testing
 
-- `MAX_FILES`: Limit number of files to download (for testing, default: unlimited)
-  ```bash
-  export MAX_FILES=10  # Download only 10 files for quick testing
-  ```
+| Variable | Default | Description |
+|---|---|---|
+| `MAX_FILES` | unlimited | Limit number of files to download |
 
 ## Usage
 
 ### macOS / Linux
 
 ```bash
-# Set environment variables
-export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://clvreformas.com/"
+export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://example.com/"
 export OUTPUT_DIR="./my_website"
 export REMOVE_CLICKABLE_CONTACTS="false"  # Keep email/phone links
 
-# Run the tool
 python3 -m wayback_archive.cli
-
-# Test with Python's built-in server
-cd my_website
-python3 -m http.server 8000
-# Open http://localhost:8000 in your browser
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-# Set environment variables
-$env:WAYBACK_URL = "https://web.archive.org/web/20250417203037/http://clvreformas.com/"
+$env:WAYBACK_URL = "https://web.archive.org/web/20250417203037/http://example.com/"
 $env:OUTPUT_DIR = ".\my_website"
 $env:REMOVE_CLICKABLE_CONTACTS = "false"
 
-# Run the tool
 python -m wayback_archive.cli
-
-# Test with Python's built-in server
-cd my_website
-python -m http.server 8000
-# Open http://localhost:8000 in your browser
 ```
 
 ### Windows (CMD)
 
 ```cmd
-REM Set environment variables
-set WAYBACK_URL=https://web.archive.org/web/20250417203037/http://clvreformas.com/
+set WAYBACK_URL=https://web.archive.org/web/20250417203037/http://example.com/
 set OUTPUT_DIR=.\my_website
 set REMOVE_CLICKABLE_CONTACTS=false
 
-REM Run the tool
 python -m wayback_archive.cli
-
-REM Test with Python's built-in server
-cd my_website
-python -m http.server 8000
-REM Open http://localhost:8000 in your browser
 ```
 
-### Quick Testing
+### Quick Test
 
-For quick testing with a limited number of files:
+Download a limited number of files to verify everything works:
 
 ```bash
-export MAX_FILES=5  # Download only 5 files
-export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://clvreformas.com/"
+export WAYBACK_URL="https://web.archive.org/web/20250417203037/http://example.com/"
+export MAX_FILES=5
 python3 -m wayback_archive.cli
 ```
 
 ## How It Works
 
-1. **Initial Download**: Downloads the main page from the Wayback Machine
-2. **Link Extraction**: Parses HTML to find all links, images, CSS, and JavaScript
-3. **CSS Processing**: Extracts font URLs, background images, and `@import` statements
-   - Downloads Google Fonts CSS files and font files locally
-   - Detects and removes corrupted font files (HTML error pages)
-4. **JS Processing**: Extracts dynamically loaded resources
-5. **Data Attribute Processing**: Processes `data-*` attributes containing URLs (videos, images, etc.)
-6. **Iterative Crawling**: Continues downloading new resources until all are fetched
-7. **Timeframe Fallback**: If a resource returns 404, searches nearby timestamps
-8. **URL Rewriting**: Converts all links to relative paths for local serving
-9. **Link Preservation**: Preserves icon groups, button links, and cookie consent functionality
+1. **Initial download** -- Fetches the main page from the Wayback Machine
+2. **Link extraction** -- Parses HTML to find all referenced assets (links, images, CSS, JS)
+3. **CSS processing** -- Extracts font URLs, background images, and `@import` statements; downloads Google Fonts locally; detects corrupted font files
+4. **JS processing** -- Extracts dynamically loaded resources from JavaScript
+5. **Data attributes** -- Scans `data-*` attributes for additional asset URLs
+6. **Iterative crawling** -- Continues discovering and downloading resources until the queue is empty
+7. **Timeframe fallback** -- For 404 responses, searches nearby Wayback Machine timestamps
+8. **URL rewriting** -- Converts all URLs to relative paths for offline serving
+9. **Preservation** -- Maintains icon groups, button links, and cookie consent functionality
 
 ## Project Structure
 
 ```
 Wayback-Archive/
-├── wayback_archive/      # Main package
-│   ├── __init__.py
-│   ├── cli.py            # Command-line interface
-│   ├── config.py         # Configuration management
-│   └── downloader.py     # Core downloader logic
-├── config/               # Configuration files
-│   ├── requirements.txt  # Python dependencies
-│   ├── requirements-dev.txt  # Development dependencies
-│   ├── setup.py         # Package setup
-│   └── pytest.ini       # Test configuration
-├── docs/                 # Documentation
-│   └── FONT_LOADING.md   # Font loading troubleshooting
-├── tests/                # Test suite
-├── LICENSE               # GPL v3 license
-└── README.md             # This file
+  wayback_archive/          # Main package
+    __init__.py
+    __main__.py
+    cli.py                  # CLI entry point
+    config.py               # Environment variable configuration
+    downloader.py           # Core download and processing engine
+  config/
+    requirements.txt        # Runtime dependencies
+    requirements-dev.txt    # Development dependencies
+    setup.py                # Package setup
+    pytest.ini              # Test configuration
+  tests/                    # Test suite
+  docs/                     # Documentation
+  LICENSE                   # GPL-3.0
+  README.md
 ```
 
 ## Testing
 
-Run the test suite:
-
 ```bash
-# Install development dependencies
-pip install -r config/requirements-dev.txt
-
-# Run tests
-pytest
-```
-
-## Troubleshooting
-
-### Port Already in Use
-
-If the Python HTTP server fails to start because port 8000 is in use, use a different port:
-
-```bash
-python3 -m http.server 8080
-```
-
-### Font Loading Issues
-
-If fonts don't load correctly in the local copy:
-
-- **Google Fonts**: The tool automatically downloads Google Fonts CSS and font files locally to avoid CORS issues
-- **Corrupted Fonts**: The tool automatically detects and removes corrupted font files (HTML error pages) from CSS
-- **Missing Fonts**: Some font files may not be available in the Wayback Machine archive
-
-For more details, see the [Font Loading Research Notes](docs/FONT_LOADING.md) document.
-
-### Missing Links or Icons
-
-- **Icon Groups**: Links in icon groups (social media, contact icons) are automatically preserved
-- **Button Links**: Button links with `sppb-btn` or `btn` classes are preserved
-- **Contact Links**: Set `REMOVE_CLICKABLE_CONTACTS=false` to preserve `tel:` and `mailto:` links
-
-### jQuery or Other Libraries Not Loading
-
-The tool includes automatic CDN fallback for critical files like jQuery. If a file fails to download from Wayback Machine, it will attempt to download from a CDN.
-
-## Recursive Link Discovery
-
-The downloader uses an iterative crawling approach:
-
-1. **Initial Download**: Downloads the main page from the Wayback Machine
-2. **Link Extraction**: Parses HTML to find all links, images, CSS, and JavaScript
-3. **CSS Processing**: Extracts font URLs, background images, and `@import` statements from CSS files
-   - Processes Google Fonts CSS files and downloads font files
-4. **JS Processing**: Extracts dynamically loaded resources from JavaScript files
-5. **Data Attributes**: Processes `data-*` attributes containing URLs
-6. **Queue Management**: New links are added to a queue and processed until empty
-7. **Deduplication**: URLs are normalized (removes query strings, fragments) to prevent downloading the same file twice
-8. **Timeframe Fallback**: If a resource returns 404, searches nearby timestamps
-
-The process continues until all internal links are downloaded. External resources like Google Fonts are downloaded and served locally to avoid CORS issues.
-
-## Development
-
-### Running Tests
-
-```bash
-# Install development dependencies
 pip install -r config/requirements-dev.txt
 
 # Run tests
@@ -277,25 +254,49 @@ pytest
 pytest --cov=wayback_archive
 ```
 
-### Code Structure
+## Troubleshooting
 
-- `wayback_archive/cli.py`: Command-line interface entry point
-- `wayback_archive/config.py`: Configuration management with environment variable support
-- `wayback_archive/downloader.py`: Core downloader with recursive crawling, URL rewriting, and optimization
+### Port Already in Use
 
-## License
+```bash
+python3 -m http.server 8080  # Use a different port
+```
 
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
-See the [LICENSE](LICENSE) file for details.
+### Font Loading Issues
 
-**Note**: This software is NOT for commercial use.
+- **Google Fonts**: Downloaded automatically to avoid CORS issues
+- **Corrupted fonts**: Detected and removed from CSS automatically
+- **Missing fonts**: Some fonts may not exist in the Wayback Machine archive
+
+See [Font Loading Research Notes](docs/FONT_LOADING.md) for details.
+
+### Missing Links or Icons
+
+- Icon groups (social media, contacts) are preserved automatically
+- Button links with `sppb-btn` or `btn` classes are preserved
+- Set `REMOVE_CLICKABLE_CONTACTS=false` to keep `tel:` and `mailto:` links
+
+### jQuery or Libraries Not Loading
+
+The tool includes automatic CDN fallback for critical libraries. If a file fails to download from the Wayback Machine, it will attempt to fetch it from a CDN.
+
+## Dependencies
+
+| Package | Purpose |
+|---|---|
+| [requests](https://pypi.org/project/requests/) | HTTP client |
+| [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) | HTML parsing |
+| [lxml](https://pypi.org/project/lxml/) | Fast HTML/XML parser |
+| [minify-html](https://pypi.org/project/minify-html/) | HTML minification |
+| [cssmin](https://pypi.org/project/cssmin/) | CSS minification |
+| [rjsmin](https://pypi.org/project/rjsmin/) | JS minification |
+| [Pillow](https://pypi.org/project/Pillow/) | Image optimization |
+| [python-dotenv](https://pypi.org/project/python-dotenv/) | `.env` file support |
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Please feel free to submit a Pull Request.
 
-## Acknowledgments
+## License
 
-- Built for preserving websites from the Wayback Machine
-- Compatible with Python 3.8+
-- Uses `minify-html` for Python 3.14+ compatibility
+This project is licensed under the [GNU General Public License v3.0](LICENSE) (GPL-3.0).
