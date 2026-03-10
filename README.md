@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8%2B-blue?logo=python&logoColor=white" alt="Python 3.8+"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License GPL-3.0"/></a>
-  <a href="https://github.com/GeiserX/Wayback-Archive/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version 1.0.0"/></a>
-  <a href="https://github.com/GeiserX/Wayback-Archive"><img src="https://img.shields.io/github/stars/GeiserX/Wayback-Archive?style=social" alt="GitHub Stars"/></a>
+  <a href="https://github.com/GeiserX/Wayback-Archive/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/GeiserX/Wayback-Archive/ci.yml?style=flat-square&logo=github&label=build" alt="Build"></a>
+  <a href="https://github.com/GeiserX/Wayback-Archive/releases"><img src="https://img.shields.io/github/v/release/GeiserX/Wayback-Archive?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/GeiserX/Wayback-Archive/blob/main/LICENSE"><img src="https://img.shields.io/github/license/GeiserX/Wayback-Archive?style=flat-square" alt="License"></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.8+">
 </p>
 
 ---
