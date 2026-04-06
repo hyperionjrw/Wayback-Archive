@@ -8,7 +8,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+    env:
+      PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
     steps:
     - uses: actions/checkout@v4
 
@@ -34,17 +36,13 @@ jobs:
         if-no-files-found: error
 
     - name: Publish to PyPI
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_TOKEN != '' }}
       working-directory: config
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        twine upload dist/*
+      run: twine upload dist/*
 
-    - name: Skip PyPI publish when secret is missing
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
-      run: |
-        echo "::warning::PYPI_API_TOKEN is not set, so this release was built but not published to PyPI."
-
-
+    - name: Skip PyPI publish
+      if: ${{ env.PYPI_TOKEN == '' }}
+      run: echo "::warning::PYPI_API_TOKEN is not set — built but not published to PyPI."
