@@ -15,7 +15,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="wayback-archive",
-    version="1.0.0",
+    version="1.3.0",
     author="GeiserX",
     description="A comprehensive tool for downloading and archiving websites from the Wayback Machine",
     long_description=long_description,
