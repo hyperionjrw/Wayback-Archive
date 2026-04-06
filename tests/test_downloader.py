@@ -147,3 +147,41 @@ class TestWaybackDownloader:
         assert "http://example.com/embed" in links_to_follow
         assert any(link == "content" or link.endswith("/content") for link in links_to_follow)
 
+    def test_process_html_rewrites_legacy_background_attributes(self):
+        """Test that HTML background= attrs in frame content are rewritten and images queued.
+
+        Regression test for GitHub Issue #1: legacy frameset pages like lightpen.com
+        use <body background="..."> and <table background="..."> with Wayback URLs
+        that must be rewritten to relative paths and queued for download.
+        """
+        html = """
+        <html>
+            <body alink="midnightblue" background="/web/20010405005347im_/http://example.com/background.gif" bgcolor="gray">
+                <table background="/web/20010405005347im_/http://example.com/background.gif" bgcolor="gray">
+                    <tr>
+                        <td>
+                            <a href="/web/20010405003907/http://example.com/page.html">Link</a>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+        </html>
+        """
+
+        processed_html, links_to_follow = self.downloader._process_html(
+            html,
+            "http://example.com/left.html",
+        )
+
+        soup = BeautifulSoup(processed_html, "lxml")
+
+        # background= attributes must be rewritten to relative paths
+        body = soup.find("body")
+        assert body["background"] == "/background.gif"
+
+        table = soup.find("table")
+        assert table["background"] == "/background.gif"
+
+        # The background image must be queued for download
+        assert "http://example.com/background.gif" in links_to_follow
+
