@@ -2020,6 +2020,8 @@ class WaybackDownloader:
                         (not content_type and (
                             url.endswith(".html") or
                             url.endswith(".htm") or
+                            # Bare-host or root URLs (empty path or "/") are HTML.
+                            (not parsed.path or parsed.path == "/") or
                             (parsed.path and not os.path.splitext(parsed.path)[1] and "?" not in url and not any(parsed.path.lower().endswith(ext) for ext in [".css", ".js", ".json", ".xml", ".txt"]))
                         ))
                     )
