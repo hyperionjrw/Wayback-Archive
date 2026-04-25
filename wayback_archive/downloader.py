@@ -5,6 +5,8 @@ import posixpath
 import re
 import sys
 import mimetypes
+import time
+import random
 from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse, unquote
 from pathlib import Path
@@ -566,9 +568,34 @@ class WaybackDownloader:
         # Try original timestamp first (or fallback from if_)
         wayback_url = self._convert_to_wayback_url_with_timestamp(url)
         try:
-            response = self.session.get(
-                wayback_url, timeout=15, allow_redirects=True
-            )
+            # --- NEW 500 ERROR RETRY LOOP ---
+            while True:
+                response = self.session.get(
+                    wayback_url, timeout=15, allow_redirects=True
+                )
+
+                # Intercept server errors before they trigger raise_for_status()
+                if response.status_code >= 500:
+                    wait_mins = random.randint(1, 5)
+                    print(f"\n         ⚠️  Wayback Machine returned a {response.status_code} server error.")
+                    choice = input(f"         Press Enter to wait {wait_mins} minute(s) and retry, 'r' to retry immediately, or 's' to skip: ").strip().lower()
+
+                    if choice == 's':
+                        print("         ⏭️  Skipping file...", flush=True)
+                        return None
+                    elif choice == 'r':
+                        print("         🔄 Retrying immediately...", flush=True)
+                        continue
+                    else:
+                        print(f"         ⏳ Waiting {wait_mins} minute(s)...", flush=True)
+                        time.sleep(wait_mins * 60)
+                        print("         🔄 Retrying...", flush=True)
+                        continue
+
+                # If it's a successful response (or a 404/403), break the loop and proceed
+                break
+            # --------------------------------
+
             response.raise_for_status()
             content = response.content
 
