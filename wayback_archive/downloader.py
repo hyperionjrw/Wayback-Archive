@@ -1961,8 +1961,10 @@ class WaybackDownloader:
             else:
                 local_path = self._get_local_path(normalized_for_tracking)
 
-            if local_path.exists() and local_path.is_file():
-                print(f"         ⏭️  File already exists on disk, skipping download", flush=True)
+            file_exists = local_path.exists() and local_path.is_file()
+
+            if file_exists:
+                print(f"         ⏭️  File already exists on disk", flush=True)
 
                 # Log to skipped.log
                 log_path = Path(self.config.output_dir) / "skipped.log"
@@ -1971,40 +1973,39 @@ class WaybackDownloader:
 
                 files_skipped += 1
 
-                # Read from disk so the crawler can still find links in HTML/CSS
-                try:
-                    with open(local_path, "rb") as f:
-                        content = f.read()
-                except Exception as e:
-                    print(f"         ⚠️  Error reading existing file: {e}", flush=True)
+                # If it's an asset (images, fonts, etc.), we don't need to extract links. Skip completely.
+                if file_type not in ["HTML", "CSS", "JavaScript"]:
                     continue
-            else:
-                # File does not exist, proceed with network download
-                content = self.download_file(url)
+
+                print(f"         📥 Fetching remote canonical version to extract links...", flush=True)
+
+            # Proceed with network download (either file doesn't exist, or we need to extract canonical links)
+            content = self.download_file(url)
+            if not content:
+                # Try CDN fallback for critical jQuery files if Wayback fails
+                if "jquery.min.js" in url.lower() and "cdn" not in url.lower():
+                    cdn_urls = [
+                        "https://code.jquery.com/jquery-3.7.1.min.js",
+                        "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js",
+                    ]
+                    for cdn_url in cdn_urls:
+                        try:
+                            print(f"         🔄 Trying CDN fallback: {cdn_url}", flush=True)
+                            cdn_response = self.session.get(cdn_url, timeout=10, allow_redirects=True)
+                            cdn_response.raise_for_status()
+                            content = cdn_response.content
+                            print(f"         ✓ Downloaded from CDN fallback", flush=True)
+                            break
+                        except:
+                            continue
+
                 if not content:
-                    # Try CDN fallback for critical jQuery files if Wayback fails
-                    if "jquery.min.js" in url.lower() and "cdn" not in url.lower():
-                        cdn_urls = [
-                            "https://code.jquery.com/jquery-3.7.1.min.js",
-                            "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js",
-                        ]
-                        for cdn_url in cdn_urls:
-                            try:
-                                print(f"         🔄 Trying CDN fallback: {cdn_url}", flush=True)
-                                cdn_response = self.session.get(cdn_url, timeout=10, allow_redirects=True)
-                                cdn_response.raise_for_status()
-                                content = cdn_response.content
-                                print(f"         ✓ Downloaded from CDN fallback", flush=True)
-                                break
-                            except:
-                                continue
+                    files_failed += 1
+                    print(f"         ⚠️  Failed to download", flush=True)
+                    continue
 
-                    if not content:
-                        files_failed += 1
-                        print(f"         ⚠️  Failed to download", flush=True)
-                        continue
-
-            # Show file size
+            # Show file size and increment counter ONLY for newly downloaded files
+            if not file_exists:
                 size_kb = len(content) / 1024
                 if size_kb < 1024:
                     print(f"         ✓ Downloaded ({size_kb:.1f} KB)", flush=True)
@@ -2108,18 +2109,20 @@ class WaybackDownloader:
                         traceback.print_exc()
                         # Still save the raw HTML if processing fails
                         try:
-                            with open(local_path, "wb") as f:
-                                f.write(content)
-                            self.config.downloaded_files[url] = str(local_path)
+                            if not file_exists:
+                                with open(local_path, "wb") as f:
+                                    f.write(content)
+                                self.config.downloaded_files[url] = str(local_path)
                         except Exception as save_error:
                             print(f"Error saving file {local_path}: {save_error}")
                         continue
 
                     # Save HTML
                     try:
-                        with open(local_path, "w", encoding="utf-8", errors="replace") as f:
-                            f.write(processed_html)
-                        self.config.downloaded_files[url] = str(local_path)
+                        if not file_exists:
+                            with open(local_path, "w", encoding="utf-8", errors="replace") as f:
+                                f.write(processed_html)
+                            self.config.downloaded_files[url] = str(local_path)
                     except Exception as e:
                         print(f"Error saving HTML to {local_path}: {e}")
                         continue
@@ -2198,9 +2201,10 @@ class WaybackDownloader:
                         css = content.decode("utf-8", errors="ignore")
 
                     try:
-                        with open(local_path, "w", encoding="utf-8", errors="replace") as f:
-                            f.write(css)
-                        self.config.downloaded_files[url] = str(local_path)
+                        if not file_exists:
+                            with open(local_path, "w", encoding="utf-8", errors="replace") as f:
+                                f.write(css)
+                            self.config.downloaded_files[url] = str(local_path)
                     except Exception as e:
                         print(f"Error saving CSS to {local_path}: {e}")
                         continue
@@ -2232,10 +2236,10 @@ class WaybackDownloader:
 
                     js = self._minify_js(js)
 
-                    with open(local_path, "w", encoding="utf-8") as f:
-                        f.write(js)
-
-                    self.config.downloaded_files[url] = str(local_path)
+                    if not file_exists:
+                        with open(local_path, "w", encoding="utf-8") as f:
+                            f.write(js)
+                        self.config.downloaded_files[url] = str(local_path)
 
                 elif content_type and content_type.startswith("image/"):
                     # Process images
@@ -2248,23 +2252,25 @@ class WaybackDownloader:
                     img_format = format_map.get(content_type, "JPEG")
                     optimized = self._optimize_image(content, img_format)
 
-                    with open(local_path, "wb") as f:
-                        f.write(optimized)
-
-                    self.config.downloaded_files[url] = str(local_path)
+                    if not file_exists:
+                        with open(local_path, "wb") as f:
+                            f.write(optimized)
+                        self.config.downloaded_files[url] = str(local_path)
 
                 elif content_type and content_type.startswith("font/"):
                     # Save font files as-is
-                    with open(local_path, "wb") as f:
-                        f.write(content)
-                    self.config.downloaded_files[url] = str(local_path)
+                    if not file_exists:
+                        with open(local_path, "wb") as f:
+                            f.write(content)
+                        self.config.downloaded_files[url] = str(local_path)
 
                 else:
                     # Save as-is
-                    with open(local_path, "wb") as f:
-                        f.write(content)
+                    if not file_exists:
+                        with open(local_path, "wb") as f:
+                            f.write(content)
+                        self.config.downloaded_files[url] = str(local_path)
 
-                    self.config.downloaded_files[url] = str(local_path)
             except Exception as e:
                 print(f"Error processing {url}: {e}")
                 continue
