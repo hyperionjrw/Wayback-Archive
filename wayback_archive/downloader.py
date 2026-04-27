@@ -235,6 +235,7 @@ class WaybackDownloader:
             # Changed to handle URL with spaces.
             # BeautifulSoup should have dealt with attributes that're not wrapped in quotes so we won't be picking up stray attributes.
             wayback_url_pattern = r"(?:https?://web\.archive\.org)?/web/\d+(?:[a-z]+_)?/(https?://[^\"\n\r\t'<>\)]+)"
+#             wayback_url_pattern = r"(?:https?://web\.archive\.org)?/web/\d+(?:[a-z]+_)?/(https?://[^\"\s'<>\)]+)"
             match = re.search(wayback_url_pattern, path)
             if match:
                 extracted = match.group(1)
@@ -1490,21 +1491,23 @@ class WaybackDownloader:
                 if normalized_url not in self.config.visited_urls:
                     links_to_follow.append(original_url)
 
-        # Process picture/source tags for responsive images
-        for picture in soup.find_all("picture"):
-            for source in picture.find_all("source", srcset=True):
-                srcset = source.get("srcset", "")
+        # Process all responsive images (srcset and data-srcset attributes)
+        for element in soup.find_all(True):
+            for attr_name in ['srcset', 'data-srcset']:
+                if not element.has_attr(attr_name):
+                    continue
+
+                srcset = element.get(attr_name, "")
                 if not srcset:
                     continue
-                # Rewrite srcset URLs - handle wayback URLs and convert to local paths
-                # Parse srcset manually (format: "url1 100w, url2 200w" or "url1 1x, url2 2x")
+
                 srcset_parts = []
                 for item in srcset.split(','):
                     item = item.strip()
                     if not item:
                         continue
+
                     # Split URL and descriptor (e.g., "url 500w" or "url?format=100w 100w")
-                    # Descriptor is at the end: space followed by number and 'w' or 'x'
                     parts = re.split(r'\s+(\d+(?:\.\d+)?[xw])$', item, maxsplit=1)
                     if len(parts) == 3:
                         url_part, descriptor, _ = parts
@@ -1516,14 +1519,18 @@ class WaybackDownloader:
                     original_srcset = url_part
                     # Extract wayback URL if present
                     original = self._extract_original_url_from_path(url_part)
+
+                    # Safety net for absolute wayback URLs inside srcset
                     if not original and "web.archive.org" in url_part:
-                        # Try to extract from absolute wayback URL - match the full URL including query strings
-                        wayback_match = re.search(r'/web/\d+[a-z]*(?:im_|cs_|js_|jm_)/(https?://[^\s"\'<>\)]+)', url_part)
+                        wayback_match = re.search(r'/web/\d+[a-z]*(?:im_|cs_|js_|jm_)/(https?://[^\n\r\t"\'<>\)]+)', url_part)
                         if wayback_match:
                             original = wayback_match.group(1)
 
                     if original:
                         url_part = original
+
+                    # Ensure spaces in individual URLs are encoded so they don't break the descriptor separation
+                    url_part = url_part.replace(" ", "%20")
 
                     normalized_srcset = self._normalize_url(url_part, base_url)
                     is_squarespace_cdn = self._is_squarespace_cdn(normalized_srcset) or self._is_squarespace_cdn(original_srcset)
@@ -1534,52 +1541,26 @@ class WaybackDownloader:
 
                     # Rewrite to local path
                     if self._is_internal_url(normalized_srcset) or is_squarespace_cdn:
-                        if is_squarespace_cdn:
-                            parsed_resource = urlparse(normalized_srcset)
-                            resource_path = f"{parsed_resource.netloc}{parsed_resource.path}"
-                            # Preserve query string if present
-                            if parsed_resource.query:
-                                resource_path += "?" + parsed_resource.query
-                            while resource_path.startswith("/"):
-                                resource_path = resource_path[1:]
-                            if self.config.make_internal_links_relative:
+                        if self.config.make_internal_links_relative:
+                            if is_squarespace_cdn:
+                                parsed_resource = urlparse(normalized_srcset)
+                                resource_path = f"{parsed_resource.netloc}{parsed_resource.path}"
+                                if parsed_resource.query:
+                                    resource_path += "?" + parsed_resource.query
+                                while resource_path.startswith("/"):
+                                    resource_path = resource_path[1:]
                                 srcset_parts.append(f"{self._to_relative_path(f'/{resource_path}')}{descriptor}")
                             else:
-                                srcset_parts.append(f"{normalized_srcset}{descriptor}")
+                                relative_path = self._get_relative_link_path(normalized_srcset, is_page=False)
+                                srcset_parts.append(f"{relative_path}{descriptor}")
                         else:
-                            relative_path = self._get_relative_link_path(normalized_srcset, is_page=False)
-                            srcset_parts.append(f"{relative_path}{descriptor}")
+                            srcset_parts.append(f"{normalized_srcset}{descriptor}")
                     else:
                         # Keep external URLs as-is
-                        srcset_parts.append(item)
+                        srcset_parts.append(f"{url_part}{descriptor}")
 
                 if srcset_parts:
-                    source["srcset"] = ", ".join(srcset_parts)
-
-            # Also process img inside picture
-            for img in picture.find_all("img", src=True):
-                src = img.get("src", "")
-                original_src = src
-                original = self._extract_original_url_from_path(src)
-                if original:
-                    src = original
-                normalized_url = self._normalize_url(src, base_url)
-                is_squarespace_cdn = self._is_squarespace_cdn(normalized_url) or self._is_squarespace_cdn(original_src)
-                if (self._is_internal_url(normalized_url) or is_squarespace_cdn) and normalized_url not in self.config.visited_urls:
-                    links_to_follow.append(src)
-                # Rewrite img src in picture tags
-                if self._is_internal_url(normalized_url) or is_squarespace_cdn:
-                    if self.config.make_internal_links_relative:
-                        if is_squarespace_cdn:
-                            parsed_img = urlparse(normalized_url)
-                            img_path = f"{parsed_img.netloc}{parsed_img.path}"
-                            while img_path.startswith("/"):
-                                img_path = img_path[1:]
-                            img["src"] = self._to_relative_path(f"/{img_path}")
-                        else:
-                            img["src"] = self._get_relative_link_path(normalized_url, is_page=False)
-                    else:
-                        img["src"] = normalized_url
+                    element[attr_name] = ", ".join(srcset_parts)
 
         # Process CSS links
         for link in soup.find_all("link", rel="stylesheet", href=True):
@@ -1830,6 +1811,8 @@ class WaybackDownloader:
             if not hasattr(element, 'attrs') or not element.attrs:
                 continue
             for attr_name, attr_value in element.attrs.items():
+                if attr_name.lower() in ['srcset', 'data-srcset']:
+                    continue
                 if attr_name.startswith('data-') and isinstance(attr_value, str):
                     # Check if attribute contains a domain URL
                     if (self.config.domain and self.config.domain in attr_value) or self._is_squarespace_cdn(attr_value):
@@ -1865,6 +1848,8 @@ class WaybackDownloader:
 
         for element in soup.find_all(True):  # All elements
             for attr_name, attr_value in list(element.attrs.items()):
+                if attr_name.lower() in ['srcset', 'data-srcset']:
+                    continue
                 if isinstance(attr_value, str) and (base_domain in attr_value.lower() or self._is_squarespace_cdn(attr_value) or "web.archive.org" in attr_value or attr_value.startswith("/web/")):
                     # Check if it's a full URL with the domain or a Squarespace CDN URL
                     is_squarespace_cdn = self._is_squarespace_cdn(attr_value)
