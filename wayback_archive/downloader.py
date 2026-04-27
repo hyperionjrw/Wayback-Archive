@@ -671,7 +671,7 @@ class WaybackDownloader:
                             continue
 
                 # All Wayback attempts failed - try original live URL as fallback (only for assets, not HTML pages)
-                if not is_html_page and self.original_url_fallback_enabled:
+                if not is_html_page and self.config.original_url_fallback_enabled:
                     try:
                         print(f"         🔄 Wayback failed, trying original URL: {url[:80]}...", flush=True)
                         live_response = self.session.get(
@@ -698,7 +698,7 @@ class WaybackDownloader:
             # Other HTTP errors - skip silently
         except requests.exceptions.Timeout:
             # Timeout on Wayback - try original URL as fallback (only for assets)
-            if not is_html_page and self.original_url_fallback_enabled:
+            if not is_html_page and self.config.original_url_fallback_enabled:
                 try:
                     print(f"         🔄 Wayback timeout, trying original URL: {url[:80]}...", flush=True)
                     live_response = self.session.get(
