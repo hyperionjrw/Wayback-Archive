@@ -346,6 +346,9 @@ class WaybackDownloader:
         while "//" in path:
             path = path.replace("//", "/")
 
+        # Strip directory traversal attempts (e.g., ../) from bad URLs
+        path = path.replace("../", "")
+
         # Default to index.html for directories
         if not path or path.endswith("/"):
             path = path + "index.html"
