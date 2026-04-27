@@ -1948,38 +1948,67 @@ class WaybackDownloader:
 
             self.config.visited_urls.add(normalized_for_tracking)
 
-            content = self.download_file(url)
-            if not content:
-                # Try CDN fallback for critical jQuery files if Wayback fails
-                if "jquery.min.js" in url.lower() and "cdn" not in url.lower():
-                    cdn_urls = [
-                        "https://code.jquery.com/jquery-3.7.1.min.js",
-                        "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js",
-                    ]
-                    for cdn_url in cdn_urls:
-                        try:
-                            print(f"         🔄 Trying CDN fallback: {cdn_url}", flush=True)
-                            cdn_response = self.session.get(cdn_url, timeout=10, allow_redirects=True)
-                            cdn_response.raise_for_status()
-                            content = cdn_response.content
-                            print(f"         ✓ Downloaded from CDN fallback", flush=True)
-                            break
-                        except:
-                            continue
+            # --- DETERMINE PATH AND CHECK FOR EXISTING FILE ---
+            if "fonts.googleapis.com" in url and "/css" in url:
+                import hashlib
+                parsed_original = urlparse(url)
+                query_hash = hashlib.md5(parsed_original.query.encode()).hexdigest()[:8]
+                font_path = f"fonts.googleapis.com/css-{query_hash}.css"
+                local_path = self._get_local_path(f"http://{font_path}")
+            else:
+                local_path = self._get_local_path(normalized_for_tracking)
 
-                if not content:
-                    files_failed += 1
-                    print(f"         ⚠️  Failed to download", flush=True)
+            if local_path.exists() and local_path.is_file():
+                print(f"         ⏭️  File already exists on disk, skipping download", flush=True)
+
+                # Log to skipped.log
+                log_path = Path(self.config.output_dir) / "skipped.log"
+                with open(log_path, "a", encoding="utf-8") as log_file:
+                    log_file.write(f"URL: {url} -> FILE: {local_path}\n")
+
+                files_skipped += 1
+
+                # Read from disk so the crawler can still find links in HTML/CSS
+                try:
+                    with open(local_path, "rb") as f:
+                        content = f.read()
+                except Exception as e:
+                    print(f"         ⚠️  Error reading existing file: {e}", flush=True)
                     continue
+            else:
+                # File does not exist, proceed with network download
+                content = self.download_file(url)
+                if not content:
+                    # Try CDN fallback for critical jQuery files if Wayback fails
+                    if "jquery.min.js" in url.lower() and "cdn" not in url.lower():
+                        cdn_urls = [
+                            "https://code.jquery.com/jquery-3.7.1.min.js",
+                            "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js",
+                        ]
+                        for cdn_url in cdn_urls:
+                            try:
+                                print(f"         🔄 Trying CDN fallback: {cdn_url}", flush=True)
+                                cdn_response = self.session.get(cdn_url, timeout=10, allow_redirects=True)
+                                cdn_response.raise_for_status()
+                                content = cdn_response.content
+                                print(f"         ✓ Downloaded from CDN fallback", flush=True)
+                                break
+                            except:
+                                continue
+
+                    if not content:
+                        files_failed += 1
+                        print(f"         ⚠️  Failed to download", flush=True)
+                        continue
 
             # Show file size
-            size_kb = len(content) / 1024
-            if size_kb < 1024:
-                print(f"         ✓ Downloaded ({size_kb:.1f} KB)", flush=True)
-            else:
-                print(f"         ✓ Downloaded ({size_kb/1024:.1f} MB)", flush=True)
+                size_kb = len(content) / 1024
+                if size_kb < 1024:
+                    print(f"         ✓ Downloaded ({size_kb:.1f} KB)", flush=True)
+                else:
+                    print(f"         ✓ Downloaded ({size_kb/1024:.1f} MB)", flush=True)
 
-            files_downloaded += 1
+                files_downloaded += 1
 
             # Determine file type with robust detection
             try:
@@ -2033,17 +2062,6 @@ class WaybackDownloader:
                 print(f"Warning: Error detecting content type for {url}: {e}")
                 content_type = None
 
-            # Use normalized URL (without query strings) for file paths
-            # Exception: For Google Fonts CSS files, preserve query string in path for uniqueness
-            if "fonts.googleapis.com" in url and "/css" in url:
-                # For Google Fonts CSS, use query string hash to create unique filename
-                import hashlib
-                parsed_original = urlparse(url)
-                query_hash = hashlib.md5(parsed_original.query.encode()).hexdigest()[:8]
-                font_path = f"fonts.googleapis.com/css-{query_hash}.css"
-                local_path = self._get_local_path(f"http://{font_path}")
-            else:
-                local_path = self._get_local_path(normalized_for_tracking)
             local_path.parent.mkdir(parents=True, exist_ok=True)
 
             try:
