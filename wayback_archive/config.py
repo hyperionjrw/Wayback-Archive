@@ -34,7 +34,8 @@ class Config:
 
         # Image optimization
         self.optimize_images: bool = get_bool_env("OPTIMIZE_IMAGES", False)
-        self.fallback_image: string = get_bool_env("FALLBACK_IMAGE", None)
+        self.fallback_image: string = get_str_env("FALLBACK_IMAGE", None)
+        self.original_url_fallback_enabled: bool = get_bool_env("ORIGINAL_URL_FALLBACK_ENABLED", True)
 
         # Minification
         self.minify_js: bool = get_bool_env("MINIFY_JS", False)

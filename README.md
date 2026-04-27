@@ -152,11 +152,12 @@ All options are set via environment variables. You can also use a `.env` file.
 
 ### Link Handling
 
-| Variable                               | Default | Description                               |
-|----------------------------------------|---------|-------------------------------------------|
-| `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS`   | `true`  | Remove external links, keep anchor text   |
-| `REMOVE_EXTERNAL_LINKS_REMOVE_ANCHORS` | `false` | Remove external links and anchor elements |
-| `MAKE_INTERNAL_LINKS_RELATIVE`         | `true`  | Convert internal links to relative paths  |
+| Variable                               | Default | Description                                           |
+|----------------------------------------|---------|-------------------------------------------------------|
+| `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS`   | `true`  | Remove external links, keep anchor text               |
+| `REMOVE_EXTERNAL_LINKS_REMOVE_ANCHORS` | `false` | Remove external links and anchor elements             |
+| `MAKE_INTERNAL_LINKS_RELATIVE`         | `true`  | Convert internal links to relative paths              |
+| `ORIGINAL_URL_FALLBACK_ENABLED`        | `true`  | Fallback to original URL if file not found on WayBack |
 
 ### Domain
 
