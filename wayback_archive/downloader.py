@@ -232,11 +232,14 @@ class WaybackDownloader:
 
             # Pattern: /web/TIMESTAMP/https://original.com/path and replay variants
             # such as im_, cs_, js_, jm_, if_, and fw_.
-            wayback_url_pattern = r"(?:https?://web\.archive\.org)?/web/\d+(?:[a-z]+_)?/(https?://[^\"\s'<>\)]+)"
+            # Changed to handle URL with spaces.
+            # BeautifulSoup should have dealt with attributes that're not wrapped in quotes so we won't be picking up stray attributes.
+            wayback_url_pattern = r"(?:https?://web\.archive\.org)?/web/\d+(?:[a-z]+_)?/(https?://[^\"\n\r\t'<>\)]+)"
             match = re.search(wayback_url_pattern, path)
             if match:
                 extracted = match.group(1)
-                extracted = extracted.rstrip('.,;:)\'"')
+                extracted = extracted.rstrip('.,;:)\'" ') # Strip trailing punctuation that may be included in the URL
+                extracted = extracted.replace(" ", "%20") # Replace spaces with %20 to ensure valid URLs
                 return extracted
 
             # Pattern for mailto:/tel:/whatsapp: in wayback URLs
