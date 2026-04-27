@@ -1999,6 +1999,27 @@ class WaybackDownloader:
                         except:
                             continue
 
+                # --- IMAGE FALLBACK ---
+                fallback_img = getattr(self.config, 'fallback_image', None)
+                if not content and file_type == "Image" and fallback_img:
+                    fallback_img = fallback_img.strip()
+                    try:
+                        print(f"         🔄 Image missing (404/400). Attempting to load fallback...", flush=True)
+                        if fallback_img.startswith(('http://', 'https://')):
+                            # Handle remote URL fallback
+                            fallback_resp = self.session.get(fallback_img, timeout=10)
+                            fallback_resp.raise_for_status()
+                            content = fallback_resp.content
+                        else:
+                            # Handle local file fallback
+                            with open(fallback_img, 'rb') as fb_file:
+                                content = fb_file.read()
+
+                        if content:
+                            print(f"         ✓ Loaded fallback image successfully", flush=True)
+                    except Exception as e:
+                        print(f"         ⚠️  Failed to load fallback image: {e}", flush=True)
+                # --------------------------------
                 if not content:
                     files_failed += 1
                     print(f"         ⚠️  Failed to download", flush=True)

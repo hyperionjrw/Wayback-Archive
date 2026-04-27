@@ -18,7 +18,8 @@
 
 ---
 
-Wayback-Archive is a Python tool that downloads archived websites from the [Wayback Machine](https://web.archive.org/) and reconstructs them for fully functional offline viewing. It preserves all assets -- HTML, CSS, JavaScript, images, and fonts -- rewrites URLs to relative paths, and cleans up Wayback Machine artifacts so the result looks like the original site.
+Wayback-Archive is a Python tool that downloads archived websites from the [Wayback Machine](https://web.archive.org/) and reconstructs them for fully functional offline viewing. It preserves all assets -- HTML, CSS, JavaScript, images, and fonts --
+rewrites URLs to relative paths, and cleans up Wayback Machine artifacts so the result looks like the original site.
 
 ## Quick Start
 
@@ -71,17 +72,17 @@ cd output && python3 -m http.server 8000
 
 ## Why Wayback-Archive?
 
-| Capability | Wayback-Archive | wget | httrack |
-|---|:---:|:---:|:---:|
-| Wayback Machine URL rewriting | Yes | No | No |
-| Wayback artifact cleanup | Yes | No | No |
-| Timeframe fallback for 404s | Yes | No | No |
-| Google Fonts localization | Yes | No | No |
-| Font corruption detection | Yes | No | No |
-| CDN fallback | Yes | No | No |
-| HTML/CSS/JS minification | Yes | No | No |
-| Tracker and ad removal | Yes | No | No |
-| `data-*` attribute processing | Yes | No | No |
+| Capability                    | Wayback-Archive | wget | httrack |
+|-------------------------------|:---------------:|:----:|:-------:|
+| Wayback Machine URL rewriting |       Yes       |  No  |   No    |
+| Wayback artifact cleanup      |       Yes       |  No  |   No    |
+| Timeframe fallback for 404s   |       Yes       |  No  |   No    |
+| Google Fonts localization     |       Yes       |  No  |   No    |
+| Font corruption detection     |       Yes       |  No  |   No    |
+| CDN fallback                  |       Yes       |  No  |   No    |
+| HTML/CSS/JS minification      |       Yes       |  No  |   No    |
+| Tracker and ad removal        |       Yes       |  No  |   No    |
+| `data-*` attribute processing |       Yes       |  No  |   No    |
 
 General-purpose tools like `wget --mirror` or `httrack` can download live websites, but they do not understand Wayback Machine URL structures, cannot clean up archive artifacts, and lack the specialized asset recovery that Wayback-Archive provides.
 
@@ -120,54 +121,55 @@ All options are set via environment variables. You can also use a `.env` file.
 
 ### Required
 
-| Variable | Description |
-|---|---|
+| Variable      | Description                         |
+|---------------|-------------------------------------|
 | `WAYBACK_URL` | The Wayback Machine URL to download |
 
 ### Output
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable     | Default    | Description                           |
+|--------------|------------|---------------------------------------|
 | `OUTPUT_DIR` | `./output` | Output directory for downloaded files |
 
 ### Optimization
 
-| Variable | Default | Description |
-|---|---|---|
-| `OPTIMIZE_HTML` | `true` | Minify HTML |
-| `OPTIMIZE_IMAGES` | `false` | Compress images |
-| `MINIFY_JS` | `false` | Minify JavaScript |
-| `MINIFY_CSS` | `false` | Minify CSS |
+| Variable          | Default | Description                               |
+|-------------------|---------|-------------------------------------------|
+| `OPTIMIZE_HTML`   | `true`  | Minify HTML                               |
+| `OPTIMIZE_IMAGES` | `false` | Compress images                           |
+| `FALLBACK_IMAGE`  | `None`  | Path to fallback image for missing images |
+| `MINIFY_JS`       | `false` | Minify JavaScript                         |
+| `MINIFY_CSS`      | `false` | Minify CSS                                |
 
 ### Content Removal
 
-| Variable | Default | Description |
-|---|---|---|
-| `REMOVE_TRACKERS` | `true` | Remove analytics and trackers |
-| `REMOVE_ADS` | `true` | Remove advertisements |
-| `REMOVE_CLICKABLE_CONTACTS` | `true` | Remove `tel:` and `mailto:` links |
-| `REMOVE_EXTERNAL_IFRAMES` | `false` | Remove external iframes |
+| Variable                    | Default | Description                       |
+|-----------------------------|---------|-----------------------------------|
+| `REMOVE_TRACKERS`           | `true`  | Remove analytics and trackers     |
+| `REMOVE_ADS`                | `true`  | Remove advertisements             |
+| `REMOVE_CLICKABLE_CONTACTS` | `true`  | Remove `tel:` and `mailto:` links |
+| `REMOVE_EXTERNAL_IFRAMES`   | `false` | Remove external iframes           |
 
 ### Link Handling
 
-| Variable | Default | Description |
-|---|---|---|
-| `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS` | `true` | Remove external links, keep anchor text |
+| Variable                               | Default | Description                               |
+|----------------------------------------|---------|-------------------------------------------|
+| `REMOVE_EXTERNAL_LINKS_KEEP_ANCHORS`   | `true`  | Remove external links, keep anchor text   |
 | `REMOVE_EXTERNAL_LINKS_REMOVE_ANCHORS` | `false` | Remove external links and anchor elements |
-| `MAKE_INTERNAL_LINKS_RELATIVE` | `true` | Convert internal links to relative paths |
+| `MAKE_INTERNAL_LINKS_RELATIVE`         | `true`  | Convert internal links to relative paths  |
 
 ### Domain
 
-| Variable | Default | Description |
-|---|---|---|
-| `MAKE_NON_WWW` | `true` | Convert www to non-www |
-| `MAKE_WWW` | `false` | Convert non-www to www |
-| `KEEP_REDIRECTIONS` | `false` | Keep redirect pages |
+| Variable            | Default | Description            |
+|---------------------|---------|------------------------|
+| `MAKE_NON_WWW`      | `true`  | Convert www to non-www |
+| `MAKE_WWW`          | `false` | Convert non-www to www |
+| `KEEP_REDIRECTIONS` | `false` | Keep redirect pages    |
 
 ### Testing
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable    | Default   | Description                       |
+|-------------|-----------|-----------------------------------|
 | `MAX_FILES` | unlimited | Limit number of files to download |
 
 ## Usage
@@ -285,16 +287,16 @@ The tool includes automatic CDN fallback for critical libraries. If a file fails
 
 ## Dependencies
 
-| Package | Purpose |
-|---|---|
-| [requests](https://pypi.org/project/requests/) | HTTP client |
-| [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) | HTML parsing |
-| [lxml](https://pypi.org/project/lxml/) | Fast HTML/XML parser |
-| [minify-html](https://pypi.org/project/minify-html/) | HTML minification |
-| [cssmin](https://pypi.org/project/cssmin/) | CSS minification |
-| [rjsmin](https://pypi.org/project/rjsmin/) | JS minification |
-| [Pillow](https://pypi.org/project/Pillow/) | Image optimization |
-| [python-dotenv](https://pypi.org/project/python-dotenv/) | `.env` file support |
+| Package                                                    | Purpose              |
+|------------------------------------------------------------|----------------------|
+| [requests](https://pypi.org/project/requests/)             | HTTP client          |
+| [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) | HTML parsing         |
+| [lxml](https://pypi.org/project/lxml/)                     | Fast HTML/XML parser |
+| [minify-html](https://pypi.org/project/minify-html/)       | HTML minification    |
+| [cssmin](https://pypi.org/project/cssmin/)                 | CSS minification     |
+| [rjsmin](https://pypi.org/project/rjsmin/)                 | JS minification      |
+| [Pillow](https://pypi.org/project/Pillow/)                 | Image optimization   |
+| [python-dotenv](https://pypi.org/project/python-dotenv/)   | `.env` file support  |
 
 ## Contributing
 
@@ -302,14 +304,14 @@ Contributions are welcome. Please feel free to submit a Pull Request.
 
 ## Related Projects
 
-| Project | Description |
-|---------|-------------|
-| [Wayback-Diff](https://github.com/GeiserX/Wayback-Diff) | Intelligent web page comparison tool with Wayback Machine support |
-| [Website-Diff](https://github.com/GeiserX/Website-Diff) | Intelligent web page comparison tool with visual regression testing |
-| [Way-CMS](https://github.com/GeiserX/Way-CMS) | Simple web CMS for editing HTML/CSS files downloaded from Wayback Archive |
-| [web-mirror](https://github.com/GeiserX/web-mirror) | Mirror any webpage to a local server for offline access |
-| [media-download](https://github.com/GeiserX/media-download) | Download all media files from any web page into a folder schema |
-| [n8n-nodes-way-cms](https://github.com/GeiserX/n8n-nodes-way-cms) | n8n community node for Way-CMS archived web content management |
+| Project                                                           | Description                                                               |
+|-------------------------------------------------------------------|---------------------------------------------------------------------------|
+| [Wayback-Diff](https://github.com/GeiserX/Wayback-Diff)           | Intelligent web page comparison tool with Wayback Machine support         |
+| [Website-Diff](https://github.com/GeiserX/Website-Diff)           | Intelligent web page comparison tool with visual regression testing       |
+| [Way-CMS](https://github.com/GeiserX/Way-CMS)                     | Simple web CMS for editing HTML/CSS files downloaded from Wayback Archive |
+| [web-mirror](https://github.com/GeiserX/web-mirror)               | Mirror any webpage to a local server for offline access                   |
+| [media-download](https://github.com/GeiserX/media-download)       | Download all media files from any web page into a folder schema           |
+| [n8n-nodes-way-cms](https://github.com/GeiserX/n8n-nodes-way-cms) | n8n community node for Way-CMS archived web content management            |
 
 ## License
 

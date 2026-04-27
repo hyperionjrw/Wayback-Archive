@@ -34,6 +34,7 @@ class Config:
 
         # Image optimization
         self.optimize_images: bool = get_bool_env("OPTIMIZE_IMAGES", False)
+        self.fallback_image: string = get_bool_env("FALLBACK_IMAGE", None)
 
         # Minification
         self.minify_js: bool = get_bool_env("MINIFY_JS", False)
